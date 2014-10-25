@@ -5,7 +5,7 @@
   <title>Vis</title>
 
   <link rel="stylesheet" href="./css/main.css"/>
-  
+
   <script src="./js/angular.js"></script>
   <script src="./js/d3.js"></script>
   <script src="./js/underscore.js"></script>
@@ -14,15 +14,14 @@
 
   <script src="./js/app.js"></script>
   <script src="./js/app/chart.js"></script>
-  <script src="./js/app/csv.js"></script>
   <script src="./js/app/fullscreen.js"></script>
 </head>
 <body>
 
 <div ng-controller="Chart">
-  <fullscreen>
-    <chart src="./data/141023_qcdata_all.output.csv"></chart>
-  </fullscreen>
+  <div ng-controller="Fullscreen">
+    <chart src="./data/141023_qcdata_cleaned.output.csv"></chart>
+  </div>
 </div>
 
 </body>

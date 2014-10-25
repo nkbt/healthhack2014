@@ -4,15 +4,5 @@ body, html {
 }
 
 body {
-  overflow-x: hidden
-}
-
-chart {
-}
-
-chart svg {
-}
-
-chart rect {
-  fill: #36c;
+  overflow: hidden
 }
