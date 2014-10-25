@@ -12,15 +12,18 @@
   <!--<script language="text/csv" src="./data/141023_qcdata_all.output.csv" id="data"></script>-->
 
   <script src="./js/app.js"></script>
-  <script src="./js/app/chart.js"></script>
+  <script src="./js/app/csv.js"></script>
   <script src="./js/app/file_reader.js"></script>
 </head>
 <body>
 
-<div ng-controller="Chart">
+<div ng-controller="CSV">
   <file-reader ng-model="data.raw"></file-reader>
 </div>
 
+
+
+<!--<chart ng-controller="Chart" src="./data/141023_qcdata_all.output.csv"></chart>-->
 
 </body>
 </html>
