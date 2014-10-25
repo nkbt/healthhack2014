@@ -4,15 +4,14 @@
 
   angular.module('app.chart', [
     'shared.d3',
-    'shared.underscore',
-    'app.csv'
+    'shared.underscore'
   ])
 
     .controller('Chart', ['$scope', '_', function ($scope, _) {
 
     }])
 
-    .directive('chart', ['d3', '_', 'csv', function (d3, _, csv) {
+    .directive('chart', ['d3', '_', function (d3, _) {
 
 
       function rescale($scope, dimensions) {
@@ -74,11 +73,7 @@
 
         $scope.chart = d3.select($element.find('svg')[0]);
         $scope.xScale = d3.scale.linear();
-
-        csv(attr.src)
-          .then(dataReady.bind(null, $scope));
-
-
+        d3.csv(attr.src, dataReady.bind(null, $scope));
         $scope.$watch('dimensions', _.debounce(rescale.bind(null, $scope), 1000), true);
 
       }
