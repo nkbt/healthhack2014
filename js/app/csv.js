@@ -5,27 +5,13 @@
 
     .factory('csv', ['d3', '$q', function (d3, $q) {
 
-      var cache = {
-        raw: {},
-        modified: {}
-      };
+      var cache = {};
 
-
-      return function (src, lineModifier) {
+      return function (src) {
         var deferred = $q.defer();
 
-        if (cache.raw[src]) {
-
-          if (!lineModifier) {
-            deferred.resolve(cache.raw[src]);
-            return deferred.promise;
-          }
-
-          if (!cache.modified[src][lineModifier]) {
-            cache.modified[src][lineModifier] = cache.raw[src].map(lineModifier);
-          }
-
-          deferred.resolve(cache.modified[src][lineModifier]);
+        if (cache[src]) {
+          deferred.resolve(cache[src]);
           return deferred.promise;
         }
 
@@ -34,15 +20,9 @@
             if (error) {
               return deferred.reject(error);
             }
-            cache.raw[src] = data;
+            cache[src] = data;
 
-            if (!lineModifier) {
-              return deferred.resolve(cache.raw[src]);
-            }
-
-            cache.modified[src][lineModifier] = cache.raw[src].map(lineModifier);
-
-            return deferred.resolve(cache.modified[src][lineModifier]);
+            return deferred.resolve(cache[src]);
           });
 
         return deferred.promise;
