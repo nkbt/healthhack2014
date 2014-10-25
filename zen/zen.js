@@ -2,29 +2,105 @@ var Q = require('./hq');
 
 var mode = '';
 
-exports.schema = function schema(proc) {
-  mode = 'schema';
-  return proc({ states: {} }).schema;
+function Zen(states) {
+  this.data = {};
+  this.schema = [];
+  this.states = states || {}
 }
 
-exports.run = function run(proc, data) {
-  mode = 'run';
-  return proc({ states: {}, data: data });
+exports.Zen = Zen;
+
+Zen.prototype.then = function(task) {
+  this.schema.push(task);
+  return this;
 }
 
-exports.start = function start(input) {
-  if (mode === 'run') {
-    return Q.resolve(input, {});
-  } else {
-    var me = {
-      then: function(task) {
-        me.schema.push(task);
-        return me;
-      },
-      schema: [],
-    };
-    return me;
+Zen.prototype.run = function(data) {
+  this.data = data || this.data;
+  for (var i in this.schema) {
+    data = this._runTask(this.schema[i], data).data;
   }
+  return data;
+}
+
+Zen.prototype._runTask = function(task, data) {
+  if (task.all) {
+    return this._runAllTasks(task.all, data);
+  }
+  var taskName = task.name;
+  var state = this.states[taskName] || {};
+  this.states[taskName] = state;
+
+  switch (state.status) {
+    case 'done':
+    case 'running':
+      return state;
+  }
+  var me = this;
+  delete state.data; // just in case it's still hanging around;
+  if (task.fn && data !== undefined) {
+    function resolve(data, skipRun) {
+      state.status = 'done';
+      state.data = data;
+      delete state.error;
+      if (!skipRun) {
+        me.run();
+      }
+    }
+    function reject(error, skipRun) {
+      state.status = 'failed';
+      state.error = error;
+      delete state.data;
+      if (!skipRun) {
+        me.run();
+      }
+    }
+
+    try {
+      // if the function returns right away, record data and mark
+      // task as done otherwise it's still running.
+      state.status = 'running';
+      var result = task.fn(data, resolve, reject)
+      if (result !== undefined) {
+        resolve(result, true);
+      }
+      return state;
+    } catch(e) {
+      reject(e, true);
+    }
+  }
+  return state;
+}
+
+Zen.prototype._runAllTasks = function(tasks, data) {
+  var me = this;
+  var resultStates = tasks.map(function(task) {
+    return me._runTask(task, data);
+  });
+  var allDone = resultStates.filter(function(state) {
+    return state !== 'done';
+  }).length === 0;
+  if (allDone) {
+    var results = {};
+    tasks.forEach(function(task, idx) {
+      results[task.name] = resultStates[idx].data;
+    });
+    return { status: 'done', data: results };
+  } else {
+    return {};
+  }
+}
+
+Zen.mkTask = function mkTask(taskName, taskFn, timeout) {
+  taskFn = taskFn || function(data) {
+    console.log('Running task', taskName);
+    return data;
+  };
+  return { name: taskName, fn: taskFn, timeout: timeout };
+}
+
+Zen.all = function all(tasks) {
+  return { all: tasks };
 }
 
 function setTimeout(defer, timeout, taskName) {
@@ -33,93 +109,4 @@ function setTimeout(defer, timeout, taskName) {
       defer.reject(taskName + ' timed out.');
     }, timeout);
   }
-}
-
-function getState(input, taskName) {
-  var state = input.states[taskName] || {};
-  input.states[taskName] = state;
-  return state;
-}
-
-function processState(input, state) {
-  var output = { states: input.states };
-  switch(state.status) {
-    case 'done':
-      return { states: input.states, data: state.data };
-    case 'running':
-    case 'failed':
-      return { states: input.states, data: '##SKIP##' };
-    default:
-      if (input.data === '##SKIP##') {
-        return { states: input.states, data: '##SKIP##' };
-      }
-  }
-}
-
-var count = 0;
-
-exports.mkTask = function mkTask(taskName, callback, timeout) {
-  if (mode === 'schema') {
-    return { name: taskName };
-  }
-  callback = callback || function(data) { console.log('callback', taskName); return count++; };
-
-  function taskFn(input) {
-    console.log('Running task ' + taskName, input);
-    var defer = Q.defer();
-    setTimeout(defer, timeout, taskName);
-
-    var state = getState(input, taskName);
-    var output = processState(input, state);
-    if (output) {
-      defer.resolve(output);
-    } else if (input.data !== undefined) {
-      state.status = 'running';
-      Q.resolve(input.data).then(callback)
-      .then(function(result) {
-        if (result !== undefined) {
-          state.status = 'done';
-        }
-        state.data = result;
-        input.states[taskName] = state;
-        console.log('result:', result);
-        defer.resolve({ states: input.states, data: result });
-      }, function(error) {
-        state.status = 'failed';
-        delete state.data;
-        input.states[taskName] = state;
-        defer.resolve({ states: input.states});
-      });
-    }
-    return defer.promise;
-  }
-  taskFn.taskName = taskName;
-  return taskFn;
-}
-
-exports.mkNestedTask = function mkNestedTask(taskName, tasks) {
-  if (mode === 'run') {
-    function taskFn(input) {
-      console.log('Running nested task ' + taskName, input);
-      var promises = tasks.map(function(task) {
-        return Q.resolve(input).then(task);
-      });
-      return Q.all(promises).then(function(results) {
-        var resultMap = {};
-        tasks.forEach(function(task, idx) {
-          resultMap[task.taskName] = results[idx].data;
-        });
-        return { states: input.states, data: resultMap };
-      });
-    }
-    taskFn.taskName = taskName;
-    return taskFn;
-  } else {
-    return { name: taskName, children: tasks };
-  }
-}
-
-exports.inParallel = function inParallel() {
-  console.log(arguments);
-  return exports.mkNestedTask(null, arguments);
 }

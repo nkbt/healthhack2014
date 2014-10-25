@@ -1,7 +1,7 @@
-var Zen = require('./zen');
+var Zen = require('./zen').Zen;
 
-function Genome(input) {
-  return Zen.start(input)
+function Genome() {
+  return new Zen()
     .then(Sequencing())
     .then(BCL())
     .then(PostBCL())
@@ -9,17 +9,20 @@ function Genome(input) {
 }
 
 function Sequencing() { return Zen.mkTask('Sequencing'); }
-function BCL() { return Zen.mkTask('BCL'); }
+function BCL() { return Zen.mkTask('BCL', function(data, resolve, reject) {
+  console.log('Running BCL');
+  setTimeout(function() {
+    resolve('bing!');
+  }, 500);
+}); }
 
 function PostBCL() {
-  return Zen.mkNestedTask('PostBCL',
-    [Alignment(), Read(1), Read(2)]);
+  return Zen.all([Alignment(), Read(1), Read(2)]);
 }
 function Read(n) { return Zen.mkTask('FastQC-R' + n); }
 
 function Alignment() {
-  return Zen.mkNestedTask('Alignment',
-    [WgsMetrics(), HsMetrics(), QProfile(), NovaSort()]);
+  return Zen.all([WgsMetrics(), HsMetrics(), QProfile(), NovaSort()]);
 }
 function WgsMetrics() { return Zen.mkTask('WgsMetrics', function() {}); }
 function HsMetrics() { return Zen.mkTask('HsMetrics'); }
@@ -30,12 +33,20 @@ function CheckPoint() {
   return Zen.mkTask('CheckPoint');
 }
 
-Zen.run(Genome, 'blah').then(
-  function(result) {
-    console.log('Success:', JSON.stringify(result));
-  },
-  function(err) {
-    console.log('Fail:', err);
-  });
+// Zen.run(Genome, 'blah').then(
+//   function(result) {
+//     console.log('Success:', JSON.stringify(result));
+//   },
+//   function(err) {
+//     console.log('Fail:', err);
+//   });
 
 // console.log(JSON.stringify(Zen.schema(Genome)));
+
+var zen = Genome();
+console.log(zen.run('foo'));
+console.log(zen.states);
+
+setTimeout(function() {
+  console.log(zen.states);
+}, 1000);
