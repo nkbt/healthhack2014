@@ -22,7 +22,8 @@
         $scope.$on('destroy', function () {
           $interval.cancel(interval);
           interval = null;
-        })
+        });
       }
     ]);
+
 }());

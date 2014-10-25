@@ -6,9 +6,9 @@
 
   <link rel="stylesheet" href="./css/main.css"/>
 
-  <script src="./js/angular.js"></script>
-  <script src="./js/d3.js"></script>
-  <script src="./js/underscore.js"></script>
+  <script src="./js/vendor/angular.js"></script>
+  <script src="./js/vendor/d3.js"></script>
+  <script src="./js/vendor/underscore.js"></script>
   <script src="./js/shared/d3.js"></script>
   <script src="./js/shared/underscore.js"></script>
 
@@ -18,10 +18,10 @@
 </head>
 <body>
 
-<div ng-controller="Chart">
-  <div ng-controller="Fullscreen">
-    <chart src="./data/141023_qcdata_cleaned.output.csv"></chart>
-  </div>
+<div ng-controller="Fullscreen">
+  <chart src="./data/141023_qcdata_cleaned.output.csv"
+         y="isaac_Yield_(MBases)"
+      ></chart>
 </div>
 
 </body>
