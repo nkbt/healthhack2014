@@ -1,0 +1,26 @@
+<!DOCTYPE html >
+<html ng-app="app" ng-strict-di>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title>Vis</title>
+  <script src="./js/angular.js"></script>
+  <script src="./js/d3.js"></script>
+  <script src="./js/underscore.js"></script>
+  <script src="./js/shared/d3.js"></script>
+  <script src="./js/shared/underscore.js"></script>
+
+  <!--<script language="text/csv" src="./data/141023_qcdata_all.output.csv" id="data"></script>-->
+
+  <script src="./js/app.js"></script>
+  <script src="./js/app/chart.js"></script>
+  <script src="./js/app/file_reader.js"></script>
+</head>
+<body>
+
+<div ng-controller="Chart">
+  <file-reader ng-model="data.raw"></file-reader>
+</div>
+
+
+</body>
+</html>
