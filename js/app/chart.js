@@ -6,7 +6,17 @@
     'shared.underscore'
   ])
 
-    .directive('chart', ['d3', '_', function (d3, _) {
+    .factory('chartData', ['d3', '_', function(d3, _) {
+
+
+      return function(src, dataReady) {
+        return d3.csv(src, dataReady);
+      };
+
+
+    }])
+
+    .directive('chart', ['d3', '_', 'chartData', function (d3, _, chartData) {
 
 
       function rescale() {
@@ -22,9 +32,10 @@
         this.yScale.range([this.height(), 0]);
 
         this.vis.select('.x.axis')
-          .attr('transform', 'translate(0,' + this.height() + ')')
+          .attr('transform', 'translate(0,' + (this.height()) + ')')
           .call(this.xAxis)
           .selectAll('text')
+          .style('text-anchor', 'end')
           .attr('dx', '-0.8em')
           .attr('dy', '0.15em');
 
@@ -121,7 +132,7 @@
           .attr('y', 6)
           .attr('dy', '.71em')
           .style('text-anchor', 'end')
-          .text('bcl2fastq_PCT_>=_Q30_bases');
+          .text(this.metrics.y);
 
 
         this.bar = this.vis.selectAll('.bar')
@@ -227,7 +238,9 @@
         };
 
         createChart.call(chart, $element.find('svg')[0]);
-        d3.csv(attr.src, dataReady.bind(chart));
+
+        chartData(attr.src, dataReady.bind(chart));
+
         $scope.$watch('dimensions', _.debounce(rescale.bind(chart), 1000), true);
       }
 
