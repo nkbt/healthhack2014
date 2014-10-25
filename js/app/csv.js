@@ -1,48 +1,53 @@
 (function () {
   'use strict';
 
-  function toFloat(str) {
-    return str && str.length > 0 ? parseFloat(str) : 0;
-  }
+  angular.module('app.csv', ['shared.d3'])
 
+    .factory('csv', ['d3', '$q', function (d3, $q) {
 
-  angular.module('app.csv', [
-    'shared.underscore',
-    'app.fileReader'
-  ])
-
-    .controller('CSV', ['$scope', '_', function ($scope, _) {
-
-      function parseCsv(text) {
-        var lines = text.split('\n'),
-          header = lines.shift().split(',');
-
-        $scope.data.parsed = _.map(lines, function (line) {
-          return _.object(header, line.split(','))
-        });
-      }
-
-      function pickYield() {
-        $scope.data.yield.r1 = _.map(
-          _.pluck($scope.data.parsed, 'isaac_Yield_(Mbases)_R1'), toFloat
-        );
-        $scope.data.yield.r2 = _.map(
-          _.pluck($scope.data.parsed, 'isaac_Yield_(Mbases)_R2'), toFloat
-        );
-
-        console.log("$scope.data.yield", $scope.data.yield);
-      }
-
-
-      $scope.data = {
-        raw: '',
-        parsed: [],
-        yield: {}
+      var cache = {
+        raw: {},
+        modified: {}
       };
 
-      $scope.$watch('data.raw', parseCsv);
-      $scope.$watch('data.parsed', pickYield);
-    }]);
 
+      return function (src, lineModifier) {
+        var deferred = $q.defer();
+
+        if (cache.raw[src]) {
+
+          if (!lineModifier) {
+            deferred.resolve(cache.raw[src]);
+            return deferred.promise;
+          }
+
+          if (!cache.modified[src][lineModifier]) {
+            cache.modified[src][lineModifier] = cache.raw[src].map(lineModifier);
+          }
+
+          deferred.resolve(cache.modified[src][lineModifier]);
+          return deferred.promise;
+        }
+
+        d3.csv(src)
+          .get(function (error, data) {
+            if (error) {
+              return deferred.reject(error);
+            }
+            cache.raw[src] = data;
+
+            if (!lineModifier) {
+              return deferred.resolve(cache.raw[src]);
+            }
+
+            cache.modified[src][lineModifier] = cache.raw[src].map(lineModifier);
+
+            return deferred.resolve(cache.modified[src][lineModifier]);
+          });
+
+        return deferred.promise;
+      }
+
+    }]);
 
 }());
