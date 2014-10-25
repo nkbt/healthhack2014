@@ -2,7 +2,8 @@
   'use strict';
 
   angular.module('app', [
-    'app.csv'
+    'app.chart',
+    'app.fullscreen'
   ]);
 
 }());
