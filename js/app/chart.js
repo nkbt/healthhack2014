@@ -25,6 +25,16 @@
 
 
       var _data = [];
+      var y0 = {};
+
+      function offset(d) {
+        return _.reduce(y0[d['info_Flowcell']], function (sum, item, key) {
+          if (key < d['info_lane']) {
+            sum = sum + item;
+          }
+          return sum;
+        }, 0);
+      }
 
 
       function rescale() {
@@ -37,7 +47,7 @@
           .attr('height', this.height() + this.margin.top + this.margin.bottom);
 
         this.xScale.rangeRoundBands([0, this.width()], 0.1);
-        this.yScale.range([this.height(), 0]);
+        this.yScale.range([0, this.height()]);
 
 
         var bars = this.chart.selectAll('.bar');
@@ -49,7 +59,7 @@
             return this.yScale(d[this.metrics.y]);
           }.bind(this))
           .attr('y', function (d) {
-            return this.height() - this.yScale(d[this.metrics.y]);
+            return this.height() - this.yScale(offset(d)) - this.yScale(d[this.metrics.y]);
           }.bind(this))
           .attr('x', function (d) {
             return this.xScale(d['info_Flowcell']);
@@ -75,13 +85,20 @@
       function redraw() {
         var data = _data;
 
+        data.forEach(function (d) {
+          y0[d['info_Flowcell']] = y0[d['info_Flowcell']] || {};
+          y0[d['info_Flowcell']][d['info_lane']] = y0[d['info_Flowcell']][d['info_lane']] || 0;
+          y0[d['info_Flowcell']][d['info_lane']] = parseFloat(d[this.metrics.y]);
+        }.bind(this));
+
         this.xScale.domain(data.map(function (d) {
           return d['info_Flowcell'];
         }));
-        this.yScale.domain(d3.extent(data, function (d) {
-          return parseFloat(d[this.metrics.y]);
-        }.bind(this)));
-
+        this.yScale.domain([0, d3.max(data, function (d) {
+          return _.reduce(y0[d['info_Flowcell']], function (sum, item) {
+            return sum + item;
+          }, parseFloat(d[this.metrics.y]));
+        }.bind(this))]);
 
         var bars = this.chart.selectAll('.bar').data(data);
 
@@ -94,7 +111,7 @@
             return this.yScale(d[this.metrics.y]);
           }.bind(this))
           .attr('y', function (d) {
-            return this.height() - this.yScale(d[this.metrics.y]);
+            return this.height() - this.yScale(offset(d)) - this.yScale(d[this.metrics.y]);
           }.bind(this))
           .attr('x', function (d) {
             return this.xScale(d['info_Flowcell']);
@@ -110,7 +127,10 @@
           .attr('x', function (d) {
             return this.xScale(d['info_Flowcell']);
           }.bind(this))
-          .style('fill', 'rgba(0,100,0,0.1)')
+//          .style('fill', 'rgba(0,100,0,0.1)')
+          .style('fill', function (d) {
+            return this.color(d['info_lane']);
+          }.bind(this))
 
           .transition()
           .delay(200)
@@ -120,7 +140,7 @@
             return this.yScale(d[this.metrics.y]);
           }.bind(this))
           .attr('y', function (d) {
-            return this.height() - this.yScale(d[this.metrics.y]);
+            return this.height() - this.yScale(offset(d)) - this.yScale(d[this.metrics.y]);
           }.bind(this));
 
         bars
@@ -170,7 +190,7 @@
           .rangeRoundBands([0, this.width()], 0.1);
 
         this.yScale = d3.scale.linear()
-          .range([this.height(), 0]);
+          .range([0, this.height()]);
 
         this.xAxis = d3.svg.axis()
           .scale(this.xScale)
@@ -209,6 +229,10 @@
             }).join('<br>');
           });
         this.vis.call(this.tip);
+
+        this.color = d3.scale.category20()
+          .domain(d3.range(1, 9));
+
       }
 
 
