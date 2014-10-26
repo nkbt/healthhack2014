@@ -11,8 +11,8 @@
 
       $scope.y = {
         list: [
-          {name: 'isaac_Yield_(MBases)', value: 'isaac_Yield_(MBases)'},
-          {name: 'bcl2fastq_PCT_>=_Q30_bases', value: 'bcl2fastq_PCT_>=_Q30_bases'},
+          {name: 'bcl2fastq_Yield_(MBases)', value: 'bcl2fastq_Yield_(MBases)'},
+          {name: 'bcl2fastq_PCT_Q30_bases', value: 'bcl2fastq_PCT_Q30_bases'}
         ],
         value: ''
       };
@@ -22,83 +22,29 @@
 
     .factory('chartData', ['d3', '_', '$timeout', function (d3, _, $timeout) {
 
-
-      function feedData(rawData, data, index) {
-//        console.log("data.push", data.push);
-//        console.log("rawData", rawData);
-//        console.log("data", data);
-
-        return $timeout(function () {
-          _.each(rawData.slice(index, 50), function (item) {
-            data.push(item);
-          });
-
-          index = index + 50;
-          if (index < rawData.length) {
-            feedData(rawData, data, index);
-          }
-        }, 1000);
-
-      }
-
-      function prepareData(data, metrics) {
-        var data1 = d3.nest()
-          .sortValues(function (a, b) {
-            return d3.ascending(a['info_Date'], b['info_Date']);
-          })
-          .key(function (d) {
-            return d['info_Flowcell'];
-          })
-          .rollup(function (d) {
-            var e = {};
-            d.forEach(function (x) {
-              var key = [x['info_lane'], x['info_Sample_Id']].join('__');
-              e[key] = x[metrics.y];
-            });
-            return e;
-          })
-          .map(data, d3.map);
-
-        data1.forEach(function (flowcellKey, d) {
-          var y0 = 0;
-          d[metrics.y] = _.map(d, function (value, laneKey) {
-            var e = {
-              flowcell: flowcellKey,
-              name: laneKey.split('__').shift(),
-              y0: y0,
-              y1: y0 + parseFloat(value)
-            };
-
-            y0 = e.y1;
-
-            return e;
-          });
-          d.total = _.last(d[metrics.y]).y1;
-          d.flowcell = flowcellKey;
-        }.bind(this));
-        console.log("data1", data1);
-        return data1;
-      }
-
-
       return function (src, metrics, dataReady) {
         return d3.csv(src, function (data) {
           var data1 = data.slice(0, 50);
 
-          dataReady(prepareData(data1, metrics));
+          dataReady(data1);
 
-          $timeout(function() {
-            dataReady(prepareData(data.slice(50, 100), metrics));
-
+          $timeout(function () {
+            _.each(data.slice(50, 100), function (d) {
+              data1.shift();
+              data1.push(d);
+            });
+            dataReady(data1);
           }, 1000);
 
-//          return feedData(data, data1, 0);
         });
       };
 
     }])
 
     .directive('chart', ['d3', '_', 'chartData', function (d3, _, chartData) {
+
+
+      var _data = [];
 
 
       function rescale() {
@@ -147,18 +93,67 @@
       }
 
 
-      function dataReady(data) {
+      function redraw() {
+        var data = _data;
+        console.log("data", data);
+
+        this.xScale.domain(data.map(function (d) {
+          return d['info_Flowcell'];
+        }));
+        this.yScale.domain(d3.extent(data, function (d) {
+          return d['bcl2fastq_PCT_Q30_bases'];
+        }));
+        console.log("this.xScale.domain()", this.xScale.domain());
+        console.log("this.yScale.domain()", this.yScale.domain());
 
 
-        this.color.domain(d3.range(1, 9));
+        var bars = this.vis.selectAll('.bar').data(data);
+
+        bars
+          .transition()
+          .duration(100)
+          .attr('class', 'bar')
+          .attr('width', this.xScale.rangeBand())
+          .attr('height', function (d) {
+            return this.yScale(d['bcl2fastq_PCT_Q30_bases']);
+          }.bind(this))
+          .attr('y', function (d) {
+            return this.height() - this.yScale(d['bcl2fastq_PCT_Q30_bases']);
+          }.bind(this))
+          .attr('x', function (d) {
+            return this.xScale(d['info_Flowcell']);
+          }.bind(this))
+          .style('fill', 'rgba(0,100,0,0.1)');
 
 
+        bars
+          .enter().append('rect')
+          .attr('width', this.xScale.rangeBand())
+          .attr('height', 0)
+          .attr('y', this.height())
+          .attr('x', function (d) {
+            return this.xScale(d['info_Flowcell']);
+          }.bind(this))
 
-        this.xScale.domain(_.unique(this.xScale.domain().concat(data.keys())));
+          .transition()
+          .delay(200)
+          .duration(300)
+          .attr('class', 'bar')
+          .attr('height', function (d) {
+            return this.yScale(d['bcl2fastq_PCT_Q30_bases']);
+          }.bind(this))
+          .attr('y', function (d) {
+            return this.height() - this.yScale(d['bcl2fastq_PCT_Q30_bases']);
+          }.bind(this))
+          .style('fill', 'rgba(0,0,0,0.1)');
 
-        this.yScale.domain([0, Math.max(d3.max(data.values(), function (d) {
-          return d.total;
-        }), this.yScale.domain()[1] || 0)]);
+        bars
+          .exit()
+          .remove();
+
+
+        return;
+
 
         this.vis.append('g')
           .attr('class', 'x axis')
@@ -206,28 +201,6 @@
             return this.color(d.name);
           }.bind(this));
 
-        this.legend = this.vis.selectAll('.legend')
-          .data(this.color.domain().slice())
-          .enter().append('g')
-          .attr('class', 'legend')
-          .attr('transform', function (d, i) {
-            return 'translate(0, ' + i * 20 + ')';
-          });
-
-        this.legend.append('rect')
-          .attr('x', this.width())
-          .attr('width', 18)
-          .attr('height', 18)
-          .style('fill', this.color);
-
-        this.legend.append('text')
-          .attr('x', this.width() - 6)
-          .attr('y', 9)
-          .attr('dy', '0.35em')
-          .style('text-anchor', 'end')
-          .text(function (d) {
-            return d;
-          });
       }
 
 
@@ -243,13 +216,8 @@
         this.xScale = d3.scale.ordinal()
           .rangeRoundBands([0, this.width()], 0.1);
 
-
         this.yScale = d3.scale.linear()
           .range([this.height(), 0]);
-
-
-        this.color = d3.scale.category20();
-
 
         this.xAxis = d3.svg.axis()
           .scale(this.xScale)
@@ -286,9 +254,27 @@
 
         createChart.call(chart, $element.find('svg')[0]);
 
-        chartData(attr.src, chart.metrics, dataReady.bind(chart));
 
-//        $scope.$watch('dimensions', _.debounce(rescale.bind(chart), 1000), true);
+        function feed(data, index) {
+          _.each(data.slice(index, index + 50), function (d) {
+            _data.push(d);
+          });
+          redraw.call(chart);
+
+          if (index + 50 < data.length && index + 50 < 500) {
+            index = index + 50;
+            setTimeout(feed.bind(null, data, index), 1000);
+          }
+        }
+
+        d3.csv(attr.src, function (data) {
+          console.log("data.length", data.length, data[0]);
+          feed(data, 0);
+        });
+
+
+        chartData(attr.src, chart.metrics, redraw.bind(chart));
+
         $scope.$watch('y.value.value', function (value) {
           chart.metrics.y = value;
         });
