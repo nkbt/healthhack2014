@@ -2,7 +2,7 @@ body {
   font-family: sans-serif;
 }
 
-div.project-nav {
+div.project-listing {
   position: absolute;
   top: 0;
   left: 0;
@@ -12,7 +12,7 @@ div.project-nav {
   border-right: solid 2px #ccc;
 }
 
-div.project-detail {
+div.project-details {
   padding-left: 200px;
 }
 

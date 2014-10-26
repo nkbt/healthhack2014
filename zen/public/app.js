@@ -10,27 +10,81 @@ angular.module('zen', [
     ZenService: di.factory(ZenService),
   });
 
-  var app = di.make(AppCtrl);
-
-  $scope.ui = app.ui;
+  $scope.route = di.make(AppCtrl).route;
 });
 
 function AppCtrl(createUi, route, make) {
+  this.route = route([
+    ['projects', function(setCurrent) {
+      var projRoute = route.child('projects');
+      setCurrent( make(ProjectListCtrl, { route: projRoute }) );
+      return projRoute;
+    }],
+  ], 'projects');
+}
+
+function ProjectListCtrl(createUi, route, make, ZenService) {
+  route([
+    [/(.+)/, itemRoute(make.factory(ProjectCtrl))],
+  ]);
 
   var ui;
-  this.ui = ui = createUi('app.html', {
-    go: route.go,
+  this.ui = ui = createUi('project-list.html', {
     route: route,
-    // nav: make(NavCtrl),
-    // profile: make(ProfileCtrl),
+    listing: [],
+  });
+
+  ZenService.listProjects(function(listing) {
+    ui.listing = listing;
+  });
+}
+
+function ProjectCtrl(createUi, make, projId, ZenService) {
+  var ui;
+  this.ui = ui = createUi('project.html', {
+    projId: projId,
+    projData: {},
+  });
+
+  ZenService.getProject(projId, function(projData) {
+    ui.projData = projData;
   });
 }
 
 function ZenService($http) {
-  this.listProjects = function() {
-    return $http.get('/projects');
+  var listingCallback;
+  var projectCallback;
+  var projectId;
+
+  function listProjects() {
+    $http.get('/projects')
+    .then(function(resp) { listingCallback(resp.data); });
+  }
+
+  function getProject() {
+    $http.get('/projects/' + projectId)
+    .then(function(resp) { projectCallback(resp.data); });
+  }
+
+  function poll() {
+    if (listingCallback) {
+      listProjects();
+    }
+    if (projectCallback && projectId) {
+      getProject();
+    }
+
+    setTimeout(poll, 500);
+  }
+  poll();
+
+  this.listProjects = function(callback) {
+    listingCallback = callback;
+    return listProjects();
   };
-  this.getProject = function(id) {
-    return $http.get('/projects/' + id);
+  this.getProject = function(id, callback) {
+    projectCallback = callback;
+    projectId = id;
+    return getProject();
   };
 }

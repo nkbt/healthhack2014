@@ -37,6 +37,6 @@ function runProjects() {
   projects.forEach(function(proj, idx) {
     setTimeout(function() {
       proj.run({});
-    }, idx * 500);
+    }, idx * 200);
   });
 }

@@ -1,37 +1,34 @@
 var Zen = require('./zen').Zen;
 
-function Sequencing() { return Zen.mkTask('Sequencing'); }
-function BCL() { return Zen.mkTask('BCL', function(data, resolve, reject) {
-  console.log('Running BCL');
+function dummy(data, resolve, reject) {
   setTimeout(function() {
-    resolve('bing!');
+    if (Math.random() > 0.9) {
+      reject('failed');
+    } else {
+      resolve('bing!');
+    }
   }, 500);
-}); }
+}
+
+function Sequencing() { return Zen.mkTask('Sequencing', dummy); }
+function BCL() { return Zen.mkTask('BCL', dummy); }
 
 function PostBCL() {
   return Zen.all([Alignment(), Read(1), Read(2)]);
 }
-function Read(n) { return Zen.mkTask('FastQC-R' + n); }
+function Read(n) { return Zen.mkTask('FastQC-R' + n, dummy); }
 
 function Alignment() {
   return Zen.all([WgsMetrics(), HsMetrics(), QProfile(), NovaSort()]);
 }
-function WgsMetrics() { return Zen.mkTask('WgsMetrics', function() {}); }
-function HsMetrics() { return Zen.mkTask('HsMetrics'); }
-function QProfile() { return Zen.mkTask('QProfile'); }
-function NovaSort() { return Zen.mkTask('NovaSort', function() { throw 'blah'; }); }
+function WgsMetrics() { return Zen.mkTask('WgsMetrics', dummy); }
+function HsMetrics() { return Zen.mkTask('HsMetrics', dummy); }
+function QProfile() { return Zen.mkTask('QProfile', dummy); }
+function NovaSort() { return Zen.mkTask('NovaSort', dummy); }
 
 function CheckPoint() {
   return Zen.mkTask('CheckPoint');
 }
-
-// var zen = Genome();
-// console.log(zen.run('foo'));
-// console.log(zen.states);
-
-// setTimeout(function() {
-//   console.log(zen.states);
-// }, 1000);
 
 function genome(id) {
   var zen = new Zen()
