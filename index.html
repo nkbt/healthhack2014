@@ -20,12 +20,18 @@
 
 <div ng-controller="Fullscreen">
 
-  <chart src="./data/141023_qcdata_cleaned.output.csv"
-         y="bcl2fastq_PCT_>=_Q30_bases"
-      ></chart>
+  <div ng-controller="Chart">
+
+    <select ng-model="y.value" ng-options="item.name for item in y.list"></select>
 
 
-  <!--isaac_Yield_(MBases)-->
+    <chart src="./data/141023_qcdata_cleaned.output.csv"
+           y="{{y.value.value}}">
+    </chart>
+
+
+  </div>
+
 </div>
 
 </body>

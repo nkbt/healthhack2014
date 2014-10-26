@@ -6,10 +6,23 @@
     'shared.underscore'
   ])
 
-    .factory('chartData', ['d3', '_', function(d3, _) {
+    .controller('Chart', ['$scope', function ($scope) {
+
+      $scope.y = {
+        list: [
+          {name: 'isaac_Yield_(MBases)', value: 'isaac_Yield_(MBases)'},
+          {name: 'bcl2fastq_PCT_>=_Q30_bases', value: 'bcl2fastq_PCT_>=_Q30_bases'},
+        ],
+        value: ''
+      };
+      $scope.y.value = $scope.y.list[0];
+
+    }])
+
+    .factory('chartData', ['d3', '_', function (d3, _) {
 
 
-      return function(src, dataReady) {
+      return function (src, dataReady) {
         return d3.csv(src, dataReady);
       };
 
@@ -242,6 +255,10 @@
         chartData(attr.src, dataReady.bind(chart));
 
         $scope.$watch('dimensions', _.debounce(rescale.bind(chart), 1000), true);
+        $scope.$watch('y.value.value', function (value) {
+          chart.metrics.y = value;
+        });
+
       }
 
 
