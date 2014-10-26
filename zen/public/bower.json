@@ -1,0 +1,10 @@
+{
+  "name": "zenomics",
+  "version": "0.1.0",
+  "dependencies": {
+    "angular": "1.3.0",
+    "heroin": "0.0.2",
+    "fontawesome": "4.2.0",
+    "bootstrap": "3.2.0"
+  }
+}

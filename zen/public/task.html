@@ -1,0 +1,9 @@
+<div class='step' ng-class='ui.states[ui.task.name].status'>
+  {{ui.task.name}}
+  </br>
+  <span ng-hide='ui.states[ui.task.name].status==="running"'>
+    [{{ui.states[ui.task.name].status || 'pending'}}]
+  </span>
+  <i ng-show='ui.states[ui.task.name].status==="running"'
+     class='fa fa-spin fa-spinner'></i>
+</div>

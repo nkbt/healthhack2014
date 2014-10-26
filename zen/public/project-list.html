@@ -1,0 +1,18 @@
+<div class='project-listing'>
+  <a ng-repeat='proj in ui.listing'
+     href='#/projects/{{proj.id}}'>
+    <div class='project-item'
+         ng-class='proj.status'>
+      {{proj.name}}
+      <span ng-hide='proj.status==="running"'>
+        [{{proj.status || 'pending'}}]
+      </span>
+      <i ng-show='proj.status==="running"'
+         class='fa fa-spin fa-spinner'></i>
+    </div>
+  </a>
+</div>
+
+<div class='project-details'>
+  <div ui='ui.route.current.ui'></div>
+</div>

@@ -1,0 +1,16 @@
+<h1>{{ui.projData.name}}</h1>
+
+<div class='wf clearfix'>
+  <div class='column'>
+    <div ng-repeat='taskUi in ui.schemaUi'
+         ui='taskUi'>
+    </div>
+  </div>
+</div>
+
+<div>
+  <button ng-show='ui.projData.status === "failed"'
+    class='btn btn-primary'>
+    Schedule for resequencing
+  </button>
+</div>

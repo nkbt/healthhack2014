@@ -1,0 +1,80 @@
+body {
+  font-family: sans-serif;
+}
+
+div.project-listing {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200px;
+  min-height: 100%;
+  background: #eee;
+  border-right: solid 2px #ccc;
+}
+
+div.project-listing div.project-item {
+  padding: 10px;
+}
+
+h1 {
+  text-align: center;
+}
+
+div.project-details {
+  padding-left: 200px;
+  text-align: center;
+}
+
+div.wf {
+  display: inline-table;
+  margin: 10px;
+  padding: 10px;
+  border-radius: 20px;
+  border: solid 2px #ccc;
+}
+
+div.wf div.group {
+  padding: 10px;
+  border: dashed 2px #ccc;
+  border-radius: 10px;
+}
+
+div.wf div.column {
+  display: table-cell;
+  text-align: center;
+}
+
+div.wf div.step {
+  padding: 10px;
+  margin: 10px;
+  border: solid 1px #ccc;
+  border-radius: 10px;
+  background-color: #eee;
+}
+
+div.done {
+  color: #3c763d;
+  background-color: #dff0d8 !important;
+  border-color: #d6e9c6;
+}
+
+div.failed {
+  color: #a94442;
+  background-color: #f2dede !important;
+  border-color: #ebccd1;
+}
+
+div.running {
+  color: #8a6d3b;
+  background-color: #fcf8e3 !important;
+  border-color: #faebcc;
+}
+
+a div.project-item {
+  padding: 2px;
+}
+
+a:hover div.project-item {
+  border: solid 2px #ccc;
+  background: white !important;
+}
