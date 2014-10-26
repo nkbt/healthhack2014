@@ -69,3 +69,12 @@ div.running {
   background-color: #fcf8e3 !important;
   border-color: #faebcc;
 }
+
+a div.project-item {
+  padding: 2px;
+}
+
+a:hover div.project-item {
+  border: solid 2px #ccc;
+  background: white !important;
+}

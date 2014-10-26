@@ -33,16 +33,18 @@ module.exports = Projects;
 var genome = require('../genome');
 
 function runProjects() {
+  var counter = 0;
   projects.forEach(function(proj, idx) {
     setTimeout(function() {
       proj.run({});
-    }, idx * 100);
+    }, idx * 500);
   });
 }
 
 var projects = [];
 
 function initProjects() {
+  projects = [];
   for(var i = 0; i < 20; i++) {
     var proj = genome(i + 1);
     projects.push(proj);
