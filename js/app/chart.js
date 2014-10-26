@@ -11,8 +11,8 @@
 
       $scope.y = {
         list: [
-          {name: 'bcl2fastq_Yield_(Mbases)', value: 'bcl2fastq_Yield_(Mbases)'},
-          {name: 'bcl2fastq_PCT_Q30_bases', value: 'bcl2fastq_PCT_Q30_bases'}
+          {name: 'bcl2fastq_PCT_Q30_bases', value: 'bcl2fastq_PCT_Q30_bases'},
+          {name: 'bcl2fastq_Yield_(Mbases)', value: 'bcl2fastq_Yield_(Mbases)'}
         ],
         value: ''
       };
@@ -23,6 +23,14 @@
 
     .directive('chart', ['d3', '_', function (d3, _) {
 
+
+      function _height(d) {
+        return this.height() - this.yScale(d[this.metrics.y]);
+      }
+
+      function _y(d) {
+        return this.height() - this.yScale(offset(d));
+      }
 
       var _data = [];
       var y0 = {};
@@ -47,7 +55,7 @@
           .attr('height', this.height() + this.margin.top + this.margin.bottom);
 
         this.xScale.rangeRoundBands([0, this.width()], 0.1);
-        this.yScale.range([0, this.height()]);
+        this.yScale.range([this.height(), 0]);
 
 
         var bars = this.chart.selectAll('.bar');
@@ -55,12 +63,8 @@
         bars
           .transition().duration(100)
           .attr('width', this.xScale.rangeBand())
-          .attr('height', function (d) {
-            return this.yScale(d[this.metrics.y]);
-          }.bind(this))
-          .attr('y', function (d) {
-            return this.height() - this.yScale(offset(d)) - this.yScale(d[this.metrics.y]);
-          }.bind(this))
+          .attr('height', _height.bind(this))
+          .attr('y', _y.bind(this))
           .attr('x', function (d) {
             return this.xScale(d['info_Flowcell']);
           }.bind(this));
@@ -97,7 +101,7 @@
         this.yScale.domain([0, d3.max(data, function (d) {
           return _.reduce(y0[d['info_Flowcell']], function (sum, item) {
             return sum + item;
-          }, parseFloat(d[this.metrics.y]));
+          }, parseFloat(d[this.metrics.y])) + parseFloat(d[this.metrics.y]);
         }.bind(this))]);
 
         var bars = this.chart.selectAll('.bar').data(data);
@@ -107,15 +111,15 @@
           .duration(100)
           .attr('class', 'bar')
           .attr('width', this.xScale.rangeBand())
-          .attr('height', function (d) {
-            return this.yScale(d[this.metrics.y]);
-          }.bind(this))
-          .attr('y', function (d) {
-            return this.height() - this.yScale(offset(d)) - this.yScale(d[this.metrics.y]);
-          }.bind(this))
+          .attr('height', _height.bind(this))
+          .attr('y', _y.bind(this))
           .attr('x', function (d) {
             return this.xScale(d['info_Flowcell']);
+          }.bind(this))
+          .style('fill', function (d) {
+            return this.color(d['info_lane']);
           }.bind(this));
+
 
         bars
           .enter().append('rect')
@@ -136,12 +140,8 @@
           .delay(200)
           .duration(300)
           .attr('class', 'bar')
-          .attr('height', function (d) {
-            return this.yScale(d[this.metrics.y]);
-          }.bind(this))
-          .attr('y', function (d) {
-            return this.height() - this.yScale(offset(d)) - this.yScale(d[this.metrics.y]);
-          }.bind(this));
+          .attr('height', _height.bind(this))
+          .attr('y', _y.bind(this));
 
         bars
           .exit()
@@ -190,7 +190,7 @@
           .rangeRoundBands([0, this.width()], 0.1);
 
         this.yScale = d3.scale.linear()
-          .range([0, this.height()]);
+          .range([this.height(), 0]);
 
         this.xAxis = d3.svg.axis()
           .scale(this.xScale)
