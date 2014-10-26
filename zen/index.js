@@ -1,52 +1,24 @@
-var Zen = require('./zen').Zen;
+var express = require('express');
+var app = express();
+var serveStatic = require('serve-static')
+app.use(serveStatic('public', {'index': ['index.html']}));
+app.use(require('body-parser').json());
 
-function Genome() {
-  return new Zen()
-    .then(Sequencing())
-    .then(BCL())
-    .then(PostBCL())
-    .then(CheckPoint());
-}
+var config = require('./config');
+var providers = require('./providers');
+var mkHandler = require('./helixta/handler').mkHandler;
+var handler = mkHandler(config, providers.applicationLevel, providers.requestLevel);
 
-function Sequencing() { return Zen.mkTask('Sequencing'); }
-function BCL() { return Zen.mkTask('BCL', function(data, resolve, reject) {
-  console.log('Running BCL');
-  setTimeout(function() {
-    resolve('bing!');
-  }, 500);
-}); }
+var ajaxHandler = function(h) {
+  return handler(h, {
+    writer: 'jsonWriter'
+  });
+};
 
-function PostBCL() {
-  return Zen.all([Alignment(), Read(1), Read(2)]);
-}
-function Read(n) { return Zen.mkTask('FastQC-R' + n); }
+var handlers = require('./handlers');
+app.get('/projects', ajaxHandler(handlers.listProjects));
+app.get('/projects/:id', ajaxHandler(handlers.getProject));
 
-function Alignment() {
-  return Zen.all([WgsMetrics(), HsMetrics(), QProfile(), NovaSort()]);
-}
-function WgsMetrics() { return Zen.mkTask('WgsMetrics', function() {}); }
-function HsMetrics() { return Zen.mkTask('HsMetrics'); }
-function QProfile() { return Zen.mkTask('QProfile'); }
-function NovaSort() { return Zen.mkTask('NovaSort', function() { throw 'blah'; }); }
-
-function CheckPoint() {
-  return Zen.mkTask('CheckPoint');
-}
-
-// Zen.run(Genome, 'blah').then(
-//   function(result) {
-//     console.log('Success:', JSON.stringify(result));
-//   },
-//   function(err) {
-//     console.log('Fail:', err);
-//   });
-
-// console.log(JSON.stringify(Zen.schema(Genome)));
-
-var zen = Genome();
-console.log(zen.run('foo'));
-console.log(zen.states);
-
-setTimeout(function() {
-  console.log(zen.states);
-}, 1000);
+var server = app.listen(8000, function() {
+    console.log('Listening on port %d', server.address().port);
+});

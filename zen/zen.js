@@ -1,5 +1,3 @@
-var Q = require('./hq');
-
 var mode = '';
 
 function Zen(states) {
@@ -21,6 +19,28 @@ Zen.prototype.run = function(data) {
     data = this._runTask(this.schema[i], data).data;
   }
   return data;
+}
+
+Zen.prototype.getStatus = function() {
+  var firstTask = this.schema[0];
+  var lastTask = this.schema[this.schema.length - 1];
+  var states = this.states;
+  if (firstTask && lastTask) {
+    var lastState = states[lastTask.name];
+    if (lastState && lastState.status) {
+      return lastState.status;
+    }
+    var failed = Object.keys(states).filter(function(taskName) {
+      return states[taskName].status !== 'failed'
+    }).length;
+    if (failed) {
+      return 'failed';
+    }
+    var firstState = states[firstTask.name];
+    if (firstState && firstState.status) {
+      return 'running';
+    }
+  }
 }
 
 Zen.prototype._runTask = function(task, data) {

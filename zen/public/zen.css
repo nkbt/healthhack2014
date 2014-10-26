@@ -1,0 +1,38 @@
+body {
+  font-family: sans-serif;
+}
+
+div.project-nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200px;
+  min-height: 100%;
+  background: #eee;
+  border-right: solid 2px #ccc;
+}
+
+div.project-detail {
+  padding-left: 200px;
+}
+
+div.wf {
+  display: inline-table;
+  margin: 10px;
+  padding: 10px;
+  border-radius: 20px;
+  border: solid 2px #ccc;
+}
+
+div.wf div.group {
+  display: table-cell;
+  text-align: center;
+}
+
+div.wf div.group div.step {
+  padding: 10px;
+  margin: 10px;
+  border: solid 1px #ccc;
+  border-radius: 10px;
+  background: #eee;
+}
