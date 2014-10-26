@@ -1,6 +1,7 @@
 (function () {
   'use strict';
 
+
   angular.module('app.chart', [
     'shared.d3',
     'shared.underscore'
@@ -19,13 +20,81 @@
 
     }])
 
-    .factory('chartData', ['d3', '_', function (d3, _) {
+    .factory('chartData', ['d3', '_', '$timeout', function (d3, _, $timeout) {
 
 
-      return function (src, dataReady) {
-        return d3.csv(src, dataReady);
+      function feedData(rawData, data, index) {
+//        console.log("data.push", data.push);
+//        console.log("rawData", rawData);
+//        console.log("data", data);
+
+        return $timeout(function () {
+          _.each(rawData.slice(index, 50), function (item) {
+            data.push(item);
+          });
+
+          index = index + 50;
+          if (index < rawData.length) {
+            feedData(rawData, data, index);
+          }
+        }, 1000);
+
+      }
+
+      function prepareData(data, metrics) {
+        var data1 = d3.nest()
+          .sortValues(function (a, b) {
+            return d3.ascending(a['info_Date'], b['info_Date']);
+          })
+          .key(function (d) {
+            return d['info_Flowcell'];
+          })
+          .rollup(function (d) {
+            var e = {};
+            d.forEach(function (x) {
+              var key = [x['info_lane'], x['info_Sample_Id']].join('__');
+              e[key] = x[metrics.y];
+            });
+            return e;
+          })
+          .map(data, d3.map);
+
+        data1.forEach(function (flowcellKey, d) {
+          var y0 = 0;
+          d[metrics.y] = _.map(d, function (value, laneKey) {
+            var e = {
+              flowcell: flowcellKey,
+              name: laneKey.split('__').shift(),
+              y0: y0,
+              y1: y0 + parseFloat(value)
+            };
+
+            y0 = e.y1;
+
+            return e;
+          });
+          d.total = _.last(d[metrics.y]).y1;
+          d.flowcell = flowcellKey;
+        }.bind(this));
+        console.log("data1", data1);
+        return data1;
+      }
+
+
+      return function (src, metrics, dataReady) {
+        return d3.csv(src, function (data) {
+          var data1 = data.slice(0, 50);
+
+          dataReady(prepareData(data1, metrics));
+
+          $timeout(function() {
+            dataReady(prepareData(data.slice(50, 100), metrics));
+
+          }, 1000);
+
+//          return feedData(data, data1, 0);
+        });
       };
-
 
     }])
 
@@ -80,51 +149,16 @@
 
       function dataReady(data) {
 
-        var data1 = d3.nest()
-          .sortValues(function (a, b) {
-            return d3.ascending(a['info_Date'], b['info_Date']);
-          })
-          .key(function (d) {
-            return d['info_Flowcell'];
-          })
-          .rollup(function (d) {
-            var e = {};
-            d.forEach(function (x) {
-              var key = [x['info_lane'], x['info_Sample_Id']].join('__');
-              e[key] = x[this.metrics.y];
-            }.bind(this));
-            return e;
-          }.bind(this))
-          .map(data, d3.map);
 
         this.color.domain(d3.range(1, 9));
 
-        data1.forEach(function (flowcellKey, d) {
-          var y0 = 0;
-          d[this.metrics.y] = _.map(d, function (value, laneKey) {
-            var e = {
-              flowcell: flowcellKey,
-              name: laneKey.split('__').shift(),
-              y0: y0,
-              y1: y0 + parseFloat(value)
-            };
 
-            y0 = e.y1;
 
-            return e;
-          });
-          d.total = _.last(d[this.metrics.y]).y1;
-          d.flowcell = flowcellKey;
-        }.bind(this));
+        this.xScale.domain(_.unique(this.xScale.domain().concat(data.keys())));
 
-        data.sort(function (a, b) {
-          return b.total - a.total;
-        });
-
-        this.xScale.domain(data1.keys());
-        this.yScale.domain([0, d3.max(data1.values(), function (d) {
+        this.yScale.domain([0, Math.max(d3.max(data.values(), function (d) {
           return d.total;
-        })]);
+        }), this.yScale.domain()[1] || 0)]);
 
         this.vis.append('g')
           .attr('class', 'x axis')
@@ -149,7 +183,7 @@
 
 
         this.bar = this.vis.selectAll('.bar')
-          .data(data1.values())
+          .data(data.values())
           .enter().append('g')
           .attr('class', 'bar')
           .attr('transform', function (d) {
@@ -252,9 +286,9 @@
 
         createChart.call(chart, $element.find('svg')[0]);
 
-        chartData(attr.src, dataReady.bind(chart));
+        chartData(attr.src, chart.metrics, dataReady.bind(chart));
 
-        $scope.$watch('dimensions', _.debounce(rescale.bind(chart), 1000), true);
+//        $scope.$watch('dimensions', _.debounce(rescale.bind(chart), 1000), true);
         $scope.$watch('y.value.value', function (value) {
           chart.metrics.y = value;
         });
@@ -264,7 +298,6 @@
 
       return {
         restrict: 'E',
-        template: '<svg></svg>',
         link: link
       };
 
