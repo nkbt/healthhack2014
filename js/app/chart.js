@@ -100,9 +100,10 @@
             return this.xScale(d['info_Flowcell']);
           }.bind(this));
 
-
         bars
           .enter().append('rect')
+          .on('mouseover', this.tip.show)
+          .on('mouseout', this.tip.hide)
           .attr('width', this.xScale.rangeBand())
           .attr('height', 0)
           .attr('y', this.height())
@@ -196,6 +197,18 @@
           .style('text-anchor', 'start')
           .text(this.metrics.y);
 
+        this.tip = d3.tip()
+          .attr('class', 'd3-tip')
+          .offset([-10, 0])
+          .html(function (d) {
+            return _.map(d, function (item, key) {
+              return [
+                ['<i>', key, '</i>'].join(''),
+                ['<b>', item, '</b>'].join('')
+              ].join(': ');
+            }).join('<br>');
+          });
+        this.vis.call(this.tip);
       }
 
 
