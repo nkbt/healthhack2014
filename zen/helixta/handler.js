@@ -37,10 +37,10 @@ exports.mkHandler = function(config, appProviders, reqProviders) {
       rq._inject_scope = scope;
       rq._desc = desc;
       return qq.resolve(null, rq).then(function() {
-        console.info('begin', urlSummary);
+        //console.info('begin', urlSummary);
         return scope.invoke(h);
       }).then(function() {
-        return console.info('complete', Date.now() - startTime, 'ms');
+        //return console.info('complete', Date.now() - startTime, 'ms');
       }).fail(function(err) {
         console.error('... ERROR', desc, ' failed at', Date.now() - startTime, 'ms with ', err);
         if (err != null ? err.stack : void 0) {

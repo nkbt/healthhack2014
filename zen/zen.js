@@ -22,14 +22,12 @@ Zen.prototype.run = function(data) {
 }
 
 Zen.prototype.getStatus = function() {
-  console.log('get status');
   var states = this.states;
   var firstTask = this.schema[0];
   var lastTask = this.schema[this.schema.length - 1];
   var lastState = states[lastTask.name];
   var firstState = states[firstTask.name];
 
-  console.log(states);
   if (lastState && lastState.status) {
     return lastState.status;
   }
@@ -55,12 +53,14 @@ Zen.prototype._runTask = function(task, data) {
   switch (state.status) {
     case 'done':
     case 'running':
+    case 'failed':
       return state;
   }
   var me = this;
   delete state.data; // just in case it's still hanging around;
   if (task.fn && data !== undefined) {
     function resolve(data, skipRun) {
+      var state = me.states[taskName];
       state.status = 'done';
       state.data = data;
       delete state.error;
@@ -69,6 +69,7 @@ Zen.prototype._runTask = function(task, data) {
       }
     }
     function reject(error, skipRun) {
+      var state = me.states[taskName];
       state.status = 'failed';
       state.error = error;
       delete state.data;
@@ -121,8 +122,8 @@ Zen.mkTask = function mkTask(taskName, taskFn, timeout) {
   return { name: taskName, fn: taskFn, timeout: timeout };
 }
 
-Zen.all = function all(tasks) {
-  return { all: tasks };
+Zen.all = function all(name, tasks) {
+  return { name: name, all: tasks };
 }
 
 function setTimeout(defer, timeout, taskName) {

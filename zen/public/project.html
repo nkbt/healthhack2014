@@ -1,93 +1,16 @@
-<h1>{{ui.projId}}</h1>
-{{ui.projData}}
-<div class='wf'>
-  <div class='group'>
-    <div class='step'>
-      Sequencing
-    </div>
-    <div class='step'>
-      BCL
-    </div>
-    <div class='group'>
-      <div class='group'>
-        <div class='step'>
-          WGS Metrics
-        </div>
-      </div>
-      <div class='group'>
-        <div class='step'>
-          HS Metrics
-        </div>
-      </div>
-      <div class='group'>
-        <div class='step'>
-          Q-Profile
-        </div>
-      </div>
-      <div class='group'>
-        <div class='step'>
-          Nova Sort
-        </div>
-      </div>
-    </div>
-    <div class='group'>
-      <div class='step'>
-        FastQC-R1
-      </div>
-    </div>
-    <div class='group'>
-      <div class='step'>
-        FastQC-R2
-      </div>
-    </div>
-    <div class='step'>
-      Check Point
+<h1>{{ui.projData.name}}</h1>
+
+<div class='wf clearfix'>
+  <div class='column'>
+    <div ng-repeat='taskUi in ui.schemaUi'
+         ui='taskUi'>
     </div>
   </div>
 </div>
 
-<div class='wf'>
-  <div class='group'>
-    <div class='step'>
-      Sequencing
-    </div>
-    <div class='step'>
-      BCL
-    </div>
-    <div class='group'>
-      <div class='group'>
-        <div class='step'>
-          WGS Metrics
-        </div>
-      </div>
-      <div class='group'>
-        <div class='step'>
-          HS Metrics
-        </div>
-      </div>
-      <div class='group'>
-        <div class='step'>
-          Q-Profile
-        </div>
-      </div>
-      <div class='group'>
-        <div class='step'>
-          Nova Sort
-        </div>
-      </div>
-    </div>
-    <div class='group'>
-      <div class='step'>
-        FastQC-R1
-      </div>
-    </div>
-    <div class='group'>
-      <div class='step'>
-        FastQC-R2
-      </div>
-    </div>
-    <div class='step'>
-      Check Point
-    </div>
-  </div>
+<div>
+  <button ng-show='ui.projData.status === "failed"'
+    class='btn btn-primary'>
+    Schedule for resequencing
+  </button>
 </div>

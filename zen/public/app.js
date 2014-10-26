@@ -24,6 +24,8 @@ function AppCtrl(createUi, route, make) {
 }
 
 function ProjectListCtrl(createUi, route, make, ZenService) {
+  ZenService.resetProjects();
+  
   route([
     [/(.+)/, itemRoute(make.factory(ProjectCtrl))],
   ]);
@@ -48,7 +50,23 @@ function ProjectCtrl(createUi, make, projId, ZenService) {
 
   ZenService.getProject(projId, function(projData) {
     ui.projData = projData;
+    ui.schemaUi = projData.schema.map(renderSchema);
   });
+
+  function renderSchema(task) {
+    if (task.all) {
+      return createUi('task-group.html', {
+        task: task,
+        all: task.all.map(renderSchema),
+        states: ui.projData.states,
+      });
+    } else {
+      return createUi('task.html', {
+        task: task,
+        states: ui.projData.states,
+      })
+    }
+  }
 }
 
 function ZenService($http) {
@@ -74,7 +92,7 @@ function ZenService($http) {
       getProject();
     }
 
-    setTimeout(poll, 500);
+    setTimeout(poll, 2000);
   }
   poll();
 
@@ -86,5 +104,8 @@ function ZenService($http) {
     projectCallback = callback;
     projectId = id;
     return getProject();
+  };
+  this.resetProjects = function() {
+    $http.delete('/projects');
   };
 }

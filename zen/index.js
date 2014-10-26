@@ -18,6 +18,7 @@ var ajaxHandler = function(h) {
 var handlers = require('./handlers');
 app.get('/projects', ajaxHandler(handlers.listProjects));
 app.get('/projects/:id', ajaxHandler(handlers.getProject));
+app.delete('/projects', ajaxHandler(handlers.resetProjects));
 
 var server = app.listen(8000, function() {
     console.log('Listening on port %d', server.address().port);
